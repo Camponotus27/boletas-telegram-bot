@@ -6,7 +6,11 @@ import { Telegraf } from "telegraf";
 import { crearGastoEnNotion } from "./notion";
 import { extraerTotal, leerTextoImagen } from "./ocr";
 import {
+  esNotificacionFalabella,
+  esNotificacionWallet,
+  extraerMovimientosFalabella,
   extraerMovimientosNotificacion,
+  limpiarImagenesAntiguas,
   manejarIngresoManual,
   Movimiento,
   tecladoCategorias,
@@ -17,11 +21,8 @@ if (!BOT_TOKEN) {
   throw new Error("Falta BOT_TOKEN en .env");
 }
 
-function esNotificacionBancaria(texto: string): boolean {
-  return (
-    /google wallet/i.test(texto) || /with\s+(mastercard|visa)/i.test(texto)
-  );
-}
+const MAX_IMAGES = parseInt(process.env.MAX_IMAGES || "10", 10);
+
 
 type EstadoUsuario =
   | {
@@ -53,7 +54,7 @@ bot.start((ctx) => {
 bot.on("photo", async (ctx) => {
   try {
     const photos = ctx.message.photo;
-    const photo = photos[photos.length - 1]; 
+    const photo = photos[photos.length - 1];
     const fileId = photo.file_id;
 
     const fileLink = await ctx.telegram.getFileLink(fileId);
@@ -73,9 +74,17 @@ bot.on("photo", async (ctx) => {
       const texto = await leerTextoImagen(filePath);
       console.log("OCR:", texto);
 
-      const movimientos = extraerMovimientosNotificacion(texto);
+      limpiarImagenesAntiguas(IMAGES_DIR, MAX_IMAGES);
 
-      if (esNotificacionBancaria(texto) && movimientos.length >= 1) {
+      let movimientos: Movimiento[] = [];
+
+      if (esNotificacionWallet(texto)) {
+        movimientos = extraerMovimientosNotificacion(texto);
+      } else if (esNotificacionFalabella(texto)) {
+        movimientos = extraerMovimientosFalabella(texto);
+      }
+
+      if (movimientos.length >= 1) {
         estados.set(ctx.from.id, {
           modo: "notificaciones",
           movimientos,
@@ -272,11 +281,10 @@ bot.command("status", async (ctx) => {
   await ctx.reply(lineas.join("\n"), { parse_mode: "Markdown" });
 });
 
-bot.command("i",  manejarIngresoManual);
-bot.command("im",  manejarIngresoManual);
-bot.command("ingreso",  manejarIngresoManual);
-bot.command("ingresoManual",  manejarIngresoManual);
-
+bot.command("i", manejarIngresoManual);
+bot.command("im", manejarIngresoManual);
+bot.command("ingreso", manejarIngresoManual);
+bot.command("ingresoManual", manejarIngresoManual);
 
 function preguntarCategoria(ctx: any) {
   return ctx.reply("📂 Selecciona el tipo de gasto", tecladoCategorias());

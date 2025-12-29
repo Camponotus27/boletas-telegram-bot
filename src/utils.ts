@@ -1,3 +1,5 @@
+import fs from "fs";
+import path from "path";
 import { Markup } from "telegraf";
 import { CATEGORIAS, MAP_CATEGORIAS, MAP_TARJETAS } from "./constantes";
 import { crearGastoEnNotion } from "./notion";
@@ -13,6 +15,26 @@ export type Movimiento = {
   monto: number;
   tarjeta: string;
 };
+
+export function esNotificacionWallet(texto: string): boolean {
+  return (
+    /google wallet/i.test(texto) || /with\s+(mastercard|visa)/i.test(texto)
+  );
+}
+
+export function esNotificacionFalabella(texto: string): boolean {
+  const t = texto.toLowerCase();
+
+  let coincidencias = 0;
+
+  if (t.includes("banco falabella")) coincidencias++;
+  if (t.includes("compraste $")) coincidencias++;
+  if (t.includes("con tu cmr")) coincidencias++;
+  if (t.includes("mastercard")) coincidencias++;
+  if (t.includes("terminada en")) coincidencias++;
+
+  return coincidencias >= 2;
+}
 
 export function extraerMovimientosNotificacion(texto: string): Movimiento[] {
   const lineas = texto
@@ -119,4 +141,51 @@ export async function manejarIngresoManual(ctx: any) {
       `📂 ${categoria}\n` +
       `💳 ${tarjeta}`
   );
+}
+
+export function limpiarImagenesAntiguas(dir: string, max: number) {
+  if (!fs.existsSync(dir)) return;
+
+  const archivos = fs
+    .readdirSync(dir)
+    .map((name) => {
+      const fullPath = path.join(dir, name);
+      const stat = fs.statSync(fullPath);
+      return { name, fullPath, time: stat.mtimeMs };
+    })
+    // más antiguas primero
+    .sort((a, b) => a.time - b.time);
+
+  if (archivos.length <= max) return;
+
+  const aEliminar = archivos.slice(0, archivos.length - max);
+
+  for (const file of aEliminar) {
+    try {
+      fs.unlinkSync(file.fullPath);
+      console.log("🗑️ Imagen eliminada:", file.name);
+    } catch (err) {
+      console.error("Error eliminando imagen:", file.name, err);
+    }
+  }
+}
+
+export function extraerMovimientosFalabella(texto: string): Movimiento[] {
+  const movimientos: Movimiento[] = [];
+
+  const montoMatch = texto.match(/\$([\d.]+)/);
+  if (!montoMatch) return movimientos;
+
+  const monto = parseInt(montoMatch[1].replace(/\./g, ""));
+
+  const comercioMatch = texto.match(/en\s+([A-Z0-9 .]+)/);
+  const comercio = comercioMatch ? comercioMatch[1].trim() : "Gasto sin nombre";
+
+  movimientos.push({
+    comercio,
+    monto,
+    tarjeta: "Mastercard 3009",
+  });
+
+  return movimientos;
 }

@@ -5,30 +5,29 @@ if (!NOTION_TOKEN) {
   throw new Error("Falta BOT_TOKEN en .env");
 }
 
-
 const notion = new Client({
   auth: NOTION_TOKEN,
-})
+});
 
-const DATABASE_ID = process.env.NOTION_DATABASE_ID!
+const DATABASE_ID = process.env.NOTION_DATABASE_ID!;
 if (!DATABASE_ID) {
-  throw new Error("Falta NOTION_DATABASE_ID")
+  throw new Error("Falta NOTION_DATABASE_ID");
 }
 
 type CrearGastoInput = {
-  nombre: string
-  monto: number
-  categoria: string
-  tarjeta?: string
-  origen: string
-}
+  nombre: string;
+  monto: number;
+  categoria: string;
+  tarjeta?: string;
+  origen: string;
+};
 
 export async function crearGastoEnNotion({
   nombre,
   monto,
   categoria,
   tarjeta,
-  origen
+  origen,
 }: CrearGastoInput) {
   await notion.pages.create({
     parent: { database_id: DATABASE_ID },
@@ -48,9 +47,9 @@ export async function crearGastoEnNotion({
       Origen: {
         select: { name: origen },
       },
-      Tarjeta:{
-        select: { name: tarjeta?? "N/A" },
-      }
+      Tarjeta: {
+        select: { name: tarjeta ?? "N/A" },
+      },
     },
-  })
+  });
 }

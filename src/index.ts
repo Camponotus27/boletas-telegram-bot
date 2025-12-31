@@ -281,6 +281,7 @@ bot.command("status", async (ctx) => {
   await ctx.reply(lineas.join("\n"), { parse_mode: "Markdown" });
 });
 
+
 bot.command("i", manejarIngresoManual);
 bot.command("im", manejarIngresoManual);
 bot.command("ingreso", manejarIngresoManual);

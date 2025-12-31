@@ -114,7 +114,6 @@ export async function manejarIngresoManual(ctx: any) {
   let categoria = "otro";
   let tarjeta = "CMR";
 
-  console.log("lineas", lineas);
   if (lineas[2]) {
     const catKey = lineas[2].toLowerCase();
     categoria = MAP_CATEGORIAS[catKey] ?? "otro";

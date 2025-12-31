@@ -1,8 +1,8 @@
 import fs from "fs";
 import path from "path";
 import { Markup } from "telegraf";
-import { CATEGORIAS, MAP_CATEGORIAS, MAP_TARJETAS } from "./constantes";
-import { crearGastoEnNotion } from "./notion";
+import { CATEGORIAS, MAP_CATEGORIAS, MAP_TARJETAS } from "./constantes.js";
+import { crearGastoEnNotion } from "./notion.js";
 
 export function tecladoCategorias() {
   return Markup.inlineKeyboard(

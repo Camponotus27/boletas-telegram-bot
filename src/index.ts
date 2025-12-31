@@ -3,8 +3,8 @@ import "dotenv/config";
 import fs from "fs";
 import path from "path";
 import { Telegraf } from "telegraf";
-import { crearGastoEnNotion } from "./notion";
-import { extraerTotal, leerTextoImagen } from "./ocr";
+import { crearGastoEnNotion } from "./notion.js";
+import { extraerTotal, leerTextoImagen } from "./ocr.js";
 import {
   esNotificacionFalabella,
   esNotificacionWallet,
@@ -14,7 +14,7 @@ import {
   manejarIngresoManual,
   Movimiento,
   tecladoCategorias,
-} from "./utils";
+} from "./utils.js";
 
 const BOT_TOKEN = process.env.BOT_TOKEN;
 if (!BOT_TOKEN) {
